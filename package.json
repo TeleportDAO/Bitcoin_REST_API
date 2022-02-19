@@ -1,0 +1,30 @@
+{
+  "name": "bitcoin_rest_api",
+  "version": "1.0.0",
+  "description": "interacting with bitcoin blockchain using a REST API",
+  "main": "BitcoinRESTAPI.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TeleportDAO/Bitcoin_REST_API.git"
+  },
+  "keywords": [
+    "Bitcoin"
+  ],
+  "author": "Mahyar Daneshpajooh, Niusha Moshrefi",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TeleportDAO/Bitcoin_REST_API/issues"
+  },
+  "homepage": "https://github.com/TeleportDAO/Bitcoin_REST_API#readme",
+  "dependencies": {
+    "axios": "^0.26.0",
+    "bech32-buffer": "^0.2.0",
+    "bitcoinjs-lib": "^6.0.1",
+    "coinselect": "^3.1.12",
+    "ecpair": "^2.0.1",
+    "tiny-secp256k1": "^2.2.0"
+  }
+}
