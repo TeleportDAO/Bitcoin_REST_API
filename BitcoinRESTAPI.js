@@ -12,9 +12,9 @@ const networkTestnet = {name: 'testnet', ...networks.testnet};
 require('dotenv').config({path:"../.env"});
 const bs58 = require('bs58');
 const { BitcoinAddress } = require('bech32-buffer');
-// const { loadavg } = require('os');
-// const {MerkleTree} = require('merkletreejs');
-// const SHA256 = require('crypto-js/sha256');
+const { loadavg } = require('os');
+const {MerkleTree} = require('merkletreejs');
+const SHA256 = require('crypto-js/sha256');
 
 class BitcoinRESTAPI {
 
@@ -122,16 +122,48 @@ class BitcoinRESTAPI {
   }
 
   async getTransactionHistory (userAddress, lastSeenTxId) {
+    // get transactios from lastSeenTxId to the end
     let result;
+    let allResults;
+    let lastSeenTxIdIsReceived = false;
+    
     if (lastSeenTxId == null){
       // get all transactions for userAddress
-      result = await axios.get(`${this.baseURL}/address/${userAddress}/txs/chain`);
+      return await this.getTransactions(userAddress);
     } else {
       // get all transactions for userAddress since the last seen tx id
-      result = await axios.get(`${this.baseURL}/address/${userAddress}/txs/chain/${lastSeenTxId}`);
+      result = await axios.get(`${this.baseURL}/address/${userAddress}/txs/chain`);
+      allResults = allResults.concat(result.data);
+      lastSeenTxIdIsReceived = this.containsLastSeenTxId(lastSeenTxId, result.data);
+      lastReceivedTxId = result.data[result.data.length - 1].txid;
+      while (!lastSeenTxIdIsReceived){
+        result = await axios.get(`${this.baseURL}/address/${userAddress}/txs/chain/${lastReceivedTxId}`);
+        lastSeenTxIdIsReceived = this.containsLastSeenTxId(lastSeenTxId, result.data);
+        allResults = allResults.concat(result.data);
+        lastReceivedTxId = result.data[result.data.length - 1].txid;
+      }
     }
-    return result.data;
+    return await this.pruneUtxoSet(desiredTxId, allResults.data);
   }
+
+  async containsLastSeenTxId (desiredTxId, utxoSet) {
+    for (let i = 0; i < utxoSet.length; i++) {
+      if (utxoSet[i].txid == desiredTxId) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async pruneUtxoSet (desiredTxId, utxoSet) {
+  // removes all txs before desired tx id (removes desired tx id too)
+  for (let i = 0; i < utxoSet.length; i++) {
+    if (utxoSet[i].txid == desiredTxId) {
+      utxoSet.splice(i, utxoSet.length - i);
+      return utxoSet;
+    }
+  }
+}
 
   async getBlock (blockNumber) {
     const blockHash = await this.getHexBlockHash(blockNumber);
