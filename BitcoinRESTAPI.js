@@ -1,5 +1,4 @@
 let axios =  require('axios');
-const BigNumber = require('bignumber.js');
 let coinSelect = require('coinselect');
 let bitcoinJS = require('bitcoinjs-lib');
 let {ECPairFactory} = require('ecpair');
@@ -12,9 +11,6 @@ const networkTestnet = {name: 'testnet', ...networks.testnet};
 require('dotenv').config({path:"../.env"});
 const bs58 = require('bs58');
 const { BitcoinAddress } = require('bech32-buffer');
-const { loadavg } = require('os');
-const {MerkleTree} = require('merkletreejs');
-const SHA256 = require('crypto-js/sha256');
 
 class BitcoinRESTAPI {
 

@@ -1,6 +1,6 @@
 {
   "name": "bitcoin_rest_api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "interacting with bitcoin blockchain using a REST API",
   "main": "BitcoinRESTAPI.js",
   "scripts": {
