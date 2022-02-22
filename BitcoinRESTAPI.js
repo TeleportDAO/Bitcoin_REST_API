@@ -112,34 +112,35 @@ class BitcoinRESTAPI {
     };
   }
 
-  async getTransactions (userAddress) {
-    const result = await axios.get(`${this.baseURL}/address/${userAddress}/txs`);
+  async getConfirmedTransactions (userAddress) {
+    const result = await axios.get(`${this.baseURL}/address/${userAddress}/txs/chain`);
+    return result.data;
+  }
+
+  async getConfirmedTransactionsUpToTxId (userAddress, lastReceivedTxId) {
+    const result = await axios.get(`${this.baseURL}/address/${userAddress}/txs/chain/${lastReceivedTxId}`);
     return result.data;
   }
 
   async getTransactionHistory (userAddress, lastSeenTxId) {
     // get transactios from lastSeenTxId to the end
     let result;
-    let allResults;
+    let allResults = [];
     let lastSeenTxIdIsReceived = false;
-    
-    if (lastSeenTxId == null){
-      // get all transactions for userAddress
-      return await this.getTransactions(userAddress);
-    } else {
-      // get all transactions for userAddress since the last seen tx id
-      result = await axios.get(`${this.baseURL}/address/${userAddress}/txs/chain`);
-      allResults = allResults.concat(result.data);
-      lastSeenTxIdIsReceived = this.containsLastSeenTxId(lastSeenTxId, result.data);
-      lastReceivedTxId = result.data[result.data.length - 1].txid;
-      while (!lastSeenTxIdIsReceived){
-        result = await axios.get(`${this.baseURL}/address/${userAddress}/txs/chain/${lastReceivedTxId}`);
-        lastSeenTxIdIsReceived = this.containsLastSeenTxId(lastSeenTxId, result.data);
-        allResults = allResults.concat(result.data);
-        lastReceivedTxId = result.data[result.data.length - 1].txid;
-      }
+
+    result = await this.getConfirmedTransactions(userAddress);
+    while (!lastSeenTxIdIsReceived && result.length > 0){
+      allResults = allResults.concat(result);
+      let lastReceivedTxId = result[result.length - 1].txid;
+      result = await this.getConfirmedTransactionsUpToTxId(userAddress, lastReceivedTxId);
+      lastSeenTxIdIsReceived = await this.containsLastSeenTxId(lastSeenTxId, result);
     }
-    return await this.pruneUtxoSet(desiredTxId, allResults.data);
+    allResults = allResults.concat(result);
+
+    if (lastSeenTxId != null){
+      return await this.pruneUtxoSet(lastSeenTxId, allResults);
+    }
+    return allResults;
   }
 
   async containsLastSeenTxId (desiredTxId, utxoSet) {
