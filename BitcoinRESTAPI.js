@@ -152,14 +152,24 @@ class BitcoinRESTAPI {
   }
 
   async pruneUtxoSet (desiredTxId, utxoSet) {
-  // removes all txs before desired tx id (removes desired tx id too)
-  for (let i = 0; i < utxoSet.length; i++) {
-    if (utxoSet[i].txid == desiredTxId) {
-      utxoSet.splice(i, utxoSet.length - i);
-      return utxoSet;
+    // removes all txs before desired tx id (removes desired tx id too)
+    for (let i = 0; i < utxoSet.length; i++) {
+      if (utxoSet[i].txid == desiredTxId) {
+        utxoSet.splice(i, utxoSet.length - i);
+        return utxoSet;
+      }
     }
   }
-}
+
+  async getBalance (userAddress) {
+    // find UTXOs
+    let utxos = await this.getUTXOsAddress(userAddress);
+    let balance = 0;
+    for (let i = 0; i < utxos.length; i++) {
+      balance = balance + utxos[i].value;
+    }
+    return balance;
+  }
 
   async getBlock (blockNumber) {
     const blockHash = await this.getHexBlockHash(blockNumber);
@@ -232,11 +242,11 @@ class BitcoinRESTAPI {
 		return result.data;
 	}
 
-  async getBalance (userAddress) {
-    const utxos = await getUTXOsAddress(userAddress, this.baseURL);
-    const balance = utxos.reduce((result, utxo) => result + utxo.value, 0) / 1e8;
-    return balance;
-  }
+  // async getBalance (userAddress) {
+  //   const utxos = await this.getUTXOsAddress(userAddress, this.baseURL);
+  //   const balance = utxos.reduce((result, utxo) => result + utxo.value, 0) / 1e8;
+  //   return balance;
+  // }
 
   async sendRawTransaction (rawTransaction) {
     const result = await axios.post(`${this.baseURL}/tx`, rawTransaction);
