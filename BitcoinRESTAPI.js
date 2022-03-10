@@ -208,6 +208,7 @@ class BitcoinRESTAPI {
   }
 
   async getUTXOsAddress (userAddress) {
+    // TODO: get all utxos (not only 25)
     const result = await axios.get(`${this.baseURL}/address/${userAddress}/utxo`);
     return result.data;
   }
@@ -308,7 +309,7 @@ class BitcoinRESTAPI {
     let psbt = new this.bitcoinJS.Psbt({network});
     psbt.setVersion(this.version); 
 
-    // find UTXOs
+    // find latest UTXOs
     let utxos = await this.getUTXOsAddress(userAddress);
     
     let _utxos = utxos.map((utxo) => ({
@@ -324,12 +325,14 @@ class BitcoinRESTAPI {
     }));
 
     // add data to targets
-    const _data = Buffer.from(data, 'hex');
-    const embed = this.bitcoinJS.payments.embed({ data: [_data] })
-    targets.push({
-      script: embed.output,
-      value: 0
-    })
+    if (data != null) {
+      const _data = Buffer.from(data, 'hex');
+      const embed = this.bitcoinJS.payments.embed({ data: [_data] })
+      targets.push({
+        script: embed.output,
+        value: 0
+      })
+    }
 
     // fee rate (satoshis per byte)
     let feeRate = (await this.getFees()).slow; 
@@ -432,6 +435,12 @@ class BitcoinRESTAPI {
     psbt.finalizeAllInputs();
     let rawTransaction = psbt.extractTransaction().toHex();
     return this.sendRawTransaction(rawTransaction)
+  }
+
+  async getPubKeyFromPrivateKey (privateKey) {
+    let ECPair = ECPairFactory(ecc);
+    let key = ECPair.fromWIF(privateKey, this.bitcoinJS.networks.testnet);
+    return key.publicKey;
   }
 
 }
